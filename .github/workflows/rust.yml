@@ -10,8 +10,8 @@ jobs:
     - uses: actions-rs/toolchain@v1
       with:
         toolchain: stable
-    #- uses: ./path/to/rust-smart-cache
+    - uses: ./actions/cache.yml
     - name: Build
-      run: ls -l && cargo build --verbose
+      run: cargo build --verbose
     - name: Run tests
       run: cargo test --verbose
