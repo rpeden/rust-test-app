@@ -9,7 +9,6 @@ jobs:
     - uses: actions/checkout@v4
     - uses: actions-rs/toolchain@v1
       with:
-        profile: minimal
         toolchain: stable
     #- uses: ./path/to/rust-smart-cache
     - name: Build
