@@ -1,0 +1,41 @@
+name: 'Rust Smart Cache'
+description: 'Implements smart caching for Rust/Cargo projects'
+inputs:
+  cache-key:
+    description: 'Additional key for cache differentiation'
+    required: false
+    default: ''
+runs:
+  using: 'composite'
+  steps:
+    - name: Set up cache keys
+      id: cache-keys
+      shell: bash
+      run: |
+        echo "rust-version=$(rustc -V)" >> $GITHUB_OUTPUT
+        echo "cargo-lock-hash=$(sha256sum Cargo.lock | cut -d ' ' -f 1)" >> $GITHUB_OUTPUT
+
+    - name: Cache Cargo registry and index
+      uses: actions/cache@v4
+      with:
+        path: |
+          ~/.cargo/registry
+          ~/.cargo/git
+        key: ${{ runner.os }}-cargo-${{ steps.cache-keys.outputs.rust-version }}-${{ steps.cache-keys.outputs.cargo-lock-hash }}-${{ inputs.cache-key }}
+        restore-keys: |
+          ${{ runner.os }}-cargo-${{ steps.cache-keys.outputs.rust-version }}-
+          ${{ runner.os }}-cargo-
+
+    - name: Cache target directory
+      uses: actions/cache@v4
+      with:
+        path: target
+        key: ${{ runner.os }}-target-${{ steps.cache-keys.outputs.rust-version }}-${{ steps.cache-keys.outputs.cargo-lock-hash }}-${{ inputs.cache-key }}
+        restore-keys: |
+          ${{ runner.os }}-target-${{ steps.cache-keys.outputs.rust-version }}-
+
+    - name: Cleanup target directory
+      shell: bash
+      run: |
+        cargo clean -p $(cargo metadata --format-version 1 | jq -r '.workspace_members[]' | cut -d ' ' -f 1)
+        find ./target -type f -atime +7 -delete
